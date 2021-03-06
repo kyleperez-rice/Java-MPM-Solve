@@ -1,0 +1,10 @@
+Seemingly, the following issues exist:
+	Debug.java:
+		- Made a list of boolean variables
+		cannot access mp_used.get(j) as a variable
+
+
+
+DO:
+	Create our MP and Node list to be a certain size at the beginning of
+	everything; don't just append things
