@@ -308,9 +308,12 @@ public class Debug {
 	// the nodes at a given time and the material points in their reach
 	public static void DataDump(
 		List<List<Node>> nodeData,
-		List<List<MaterialPoint>> mpData
+		List<List<MaterialPoint>> mpData,
+		double dt
 	) throws IOException {
 
+
+		double t = 0.;
 
 		FileWriter myFile = new FileWriter("datadump.txt");
 
@@ -326,19 +329,19 @@ public class Debug {
 
 		// Each element of nodeData describes the system at one element in time
 		// So, for each element in time, create a new entry in our file
-		for (int t = 0; t < nodeData.size(); ++t) {
+		for (int tt = 0; tt < nodeData.size(); ++tt) {
 
 
-			myFile.append( "Time: " + String.valueOf( nodeData.get(t).get(0).time ) + '\n' );
+			myFile.append( "Time: " + String.valueOf( t ) + '\n' );
 
 
 			// Then create a vector of boolean values that tells us whether or not a
 			// material point is found in a given node
-			List<Boolean> mp_used = new ArrayList<Boolean>( Arrays.asList( new Boolean[mpData.get(t).size()] ) );
+			List<Boolean> mp_used = new ArrayList<Boolean>( Arrays.asList( new Boolean[mpData.get(tt).size()] ) );
 			Collections.fill(mp_used, false); // Fill all the entries to be false
 
 			// For a given element of time, print the data relevant to a given node
-			for (int i = 0; i < nodeData.get(t).size(); ++i) {
+			for (int i = 0; i < nodeData.get(tt).size(); ++i) {
 
 
 				myFile.append('\t' + "Node " + String.valueOf(i) + '\n');
@@ -347,7 +350,7 @@ public class Debug {
 
 
 				// Go through all of the material point data
-				for (int j = 0; j < mpData.get(t).size(); ++j) {
+				for (int j = 0; j < mpData.get(tt).size(); ++j) {
 
 
 					// If a material point lays in a given node's 'span', add it
@@ -356,9 +359,9 @@ public class Debug {
 					// A node's span (for linear shape functions) is just the node's x position
 					// plus or minus the node's length.
 					if (
-						( mpData.get(t).get(j).xpos > (nodeData.get(t).get(i).xpos - nodeData.get(t).get(i).length) )
+						( mpData.get(tt).get(j).xpos > (nodeData.get(tt).get(i).xpos - nodeData.get(tt).get(i).length) )
 						&& 
-						( mpData.get(t).get(j).xpos < (nodeData.get(t).get(i).xpos + nodeData.get(t).get(i).length) )
+						( mpData.get(tt).get(j).xpos < (nodeData.get(tt).get(i).xpos + nodeData.get(tt).get(i).length) )
 					) {
 
 						mp_indices.add(j);
@@ -382,51 +385,51 @@ public class Debug {
 
 
 				// Write the x position of the node and its associated mps
-				myFile.append( "\t\t" + "Node xpos: " + String.valueOf(nodeData.get(t).get(i).xpos + '\n') );
+				myFile.append( "\t\t" + "Node xpos: " + String.valueOf(nodeData.get(tt).get(i).xpos + '\n') );
 				for (int j = 0; j < mp_indices.size(); ++j) {
 
 
-					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " xpos: " + String.valueOf(mpData.get(t).get(mp_indices.get(j)).xpos) + '\n');
+					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " xpos: " + String.valueOf(mpData.get(tt).get(mp_indices.get(j)).xpos) + '\n');
 
 
 				}//end for
 
 
 				// Write the density and mass of the node and its associated mps
-				myFile.append( "\t\t" + "Node Density: " + String.valueOf(nodeData.get(t).get(i).dens + '\n') );
-				myFile.append( "\t\t" + "Node Mass: " + String.valueOf(nodeData.get(t).get(i).mass + '\n') );
+				myFile.append( "\t\t" + "Node Density: " + String.valueOf(nodeData.get(tt).get(i).dens + '\n') );
+				myFile.append( "\t\t" + "Node Mass: " + String.valueOf(nodeData.get(tt).get(i).mass + '\n') );
 				for (int j = 0; j < mp_indices.size(); ++j) {
 
 
-					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " mass: " + String.valueOf(mpData.get(t).get(mp_indices.get(j)).mass) + '\n');
+					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " mass: " + String.valueOf(mpData.get(tt).get(mp_indices.get(j)).mass) + '\n');
 
 
 				}//end for
 
 
 				// Write the xvelocities of the node and its associated mps
-				myFile.append( "\t\t" + "Node xvel: " + String.valueOf(nodeData.get(t).get(i).xvel + '\n') );
-				myFile.append( "\t\t" + "Node lagr xvel: " + String.valueOf(nodeData.get(t).get(i).l_xvel + '\n') );
+				myFile.append( "\t\t" + "Node xvel: " + String.valueOf(nodeData.get(tt).get(i).xvel + '\n') );
+				myFile.append( "\t\t" + "Node lagr xvel: " + String.valueOf(nodeData.get(tt).get(i).l_xvel + '\n') );
 				for (int j = 0; j < mp_indices.size(); ++j) {
 
 
-					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " xvel: " + String.valueOf(mpData.get(t).get(mp_indices.get(j)).xvel) + '\n');
-					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " pnt_xvel: " + String.valueOf(mpData.get(t).get(mp_indices.get(j)).pnt_xvel) + '\n');
+					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " xvel: " + String.valueOf(mpData.get(tt).get(mp_indices.get(j)).xvel) + '\n');
+					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " pnt_xvel: " + String.valueOf(mpData.get(tt).get(mp_indices.get(j)).pnt_xvel) + '\n');
 
 
 				}//end for
 
 
 				// Write the Stress/Strain/ymod of the node and its associated mps
-				myFile.append( "\t\t" + "Node Stress: " + String.valueOf(nodeData.get(t).get(i).stress + '\n') );
-				myFile.append( "\t\t" + "Node Strain: " + String.valueOf(nodeData.get(t).get(i).strain + '\n') );
-				myFile.append( "\t\t" + "Node Young's Modulus: " + String.valueOf(nodeData.get(t).get(i).ymodulus + '\n') );
+				myFile.append( "\t\t" + "Node Stress: " + String.valueOf(nodeData.get(tt).get(i).stress + '\n') );
+				myFile.append( "\t\t" + "Node Strain: " + String.valueOf(nodeData.get(tt).get(i).strain + '\n') );
+				myFile.append( "\t\t" + "Node Young's Modulus: " + String.valueOf(nodeData.get(tt).get(i).ymodulus + '\n') );
 				for (int j = 0; j < mp_indices.size(); ++j) {
 
 
-					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " Stress: " + String.valueOf(mpData.get(t).get(mp_indices.get(j)).stress) + '\n');
-					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " Strain: " + String.valueOf(mpData.get(t).get(mp_indices.get(j)).strain) + '\n');
-					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " Young's Modulus: " + String.valueOf(mpData.get(t).get(mp_indices.get(j)).ymodulus) + '\n');
+					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " Stress: " + String.valueOf(mpData.get(tt).get(mp_indices.get(j)).stress) + '\n');
+					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " Strain: " + String.valueOf(mpData.get(tt).get(mp_indices.get(j)).strain) + '\n');
+					myFile.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " Young's Modulus: " + String.valueOf(mpData.get(tt).get(mp_indices.get(j)).ymodulus) + '\n');
 					
 
 				}//end for
@@ -444,13 +447,13 @@ public class Debug {
 				if ( mp_used.get(j) == false ) {
 
 					myFile.append( "\t\t" + "MP " + String.valueOf(j) + '\n' );
-					myFile.append( "\t\t\t" + "xpos: " + String.valueOf(mpData.get(t).get(j).xpos) + '\n' );
-					myFile.append( "\t\t\t" + "mass: " + String.valueOf(mpData.get(t).get(j).mass) + '\n' );
-					myFile.append( "\t\t\t" + "xvel: " + String.valueOf(mpData.get(t).get(j).xvel) + '\n' );
-					myFile.append( "\t\t\t" + "pnt_xvel: " + String.valueOf(mpData.get(t).get(j).pnt_xvel) + '\n' );
-					myFile.append( "\t\t\t" + "stress: " + String.valueOf(mpData.get(t).get(j).stress) + '\n' );
-					myFile.append( "\t\t\t" + "strain: " + String.valueOf(mpData.get(t).get(j).strain) + '\n' );
-					myFile.append( "\t\t\t" + "young's modulus: " + String.valueOf(mpData.get(t).get(j).ymodulus) + '\n' );
+					myFile.append( "\t\t\t" + "xpos: " + String.valueOf(mpData.get(tt).get(j).xpos) + '\n' );
+					myFile.append( "\t\t\t" + "mass: " + String.valueOf(mpData.get(tt).get(j).mass) + '\n' );
+					myFile.append( "\t\t\t" + "xvel: " + String.valueOf(mpData.get(tt).get(j).xvel) + '\n' );
+					myFile.append( "\t\t\t" + "pnt_xvel: " + String.valueOf(mpData.get(tt).get(j).pnt_xvel) + '\n' );
+					myFile.append( "\t\t\t" + "stress: " + String.valueOf(mpData.get(tt).get(j).stress) + '\n' );
+					myFile.append( "\t\t\t" + "strain: " + String.valueOf(mpData.get(tt).get(j).strain) + '\n' );
+					myFile.append( "\t\t\t" + "young's modulus: " + String.valueOf(mpData.get(tt).get(j).ymodulus) + '\n' );
 
 
 
@@ -458,6 +461,9 @@ public class Debug {
 
 
 			}//end for
+
+
+			t += dt;
 
 
 		}//end for

@@ -12,29 +12,54 @@ public class SimUpdate {
 	) {
 
 
-		// Go through each node to compute the mass of it
+		// First set masses to 0
 		for ( int i = 0; i < nodes.size(); ++i ) {
 
 
-			// Initialize our mass so we can recompute it
 			nodes.get(i).mass = 0.;
 
 
-			// Do the following sum:
-			// m_l = Sum_{p: all mps} m_p * shapef_l(x_p)
-			for ( int j = 0; j < mp_points.size(); ++j ) {
+		}//end for
 
 
-				nodes.get(i).mass += mp_points.get(i).mass * nodes.get(i).shapef( mp_points.get(j).xpos );
+		// Then sum with respect to material point shape function
+		// Do sum over the material points, but use the mp's
+		// nearest nodes to cover all of the nodes
+		//
+		// This works only for linear shape functions!
+		for ( int i = 0; i < mp_points.size(); ++i ) {
 
 
-			}//end for
+			nodes.get( mp_points.get(i).left_nn ).mass += mp_points.get(i).mass * nodes.get( mp_points.get(i).left_nn ).shapef( mp_points.get(i).xpos );
+			nodes.get( mp_points.get(i).right_nn ).mass += mp_points.get(i).mass * nodes.get( mp_points.get(i).right_nn ).shapef( mp_points.get(i).xpos );
 
 
 		}//end for
 
 
 	}//end ComputeNodeMasses
+
+
+
+
+	// Move the particles
+	public static void MoveParticles(
+		List<MaterialPoint> mps,
+		double dt
+	) {
+
+
+		// xposition = xposition + vel*dt
+		for ( int i = 0; i < mps.size(); ++i ) {
+
+
+			mps.get(i).xpos += mps.get(i).pnt_xvel * dt;
+
+
+		}//end for
+
+
+	}//end MoveParticles
 
 
 
@@ -52,6 +77,7 @@ public class SimUpdate {
 		public static void XVel(
 			List<Node> nodes,
 			List<MaterialPoint> mp_points,
+			double t,
 			double dt
 		) {
 
@@ -64,25 +90,49 @@ public class SimUpdate {
 			//	+ 1/m * integral( Stress * shapef, boundary(x) )
 			//
 			// Then, enforce our boundary conditions again!
+
+			
+
+			// First make l_xvel = 0
 			for ( int i = 0; i < nodes.size(); ++i ) {
 
 
-				nodes.get(i).l_xvel
-				=
-				nodes.get(i).xvel
-				+ (
-					Accelerations.ext_x( nodes.get(i) )
-					- (1./nodes.get(i).mass) * MPMMath.RiemannSum.Stress(nodes.get(i), mp_points)
-					// Boundary terms ignored!
-				)*dt;
+				nodes.get(i).mass = 0.;
 
 
 			}//end for
 
+
+			// Then do the sum over the material points
+			// Only need to sum over the nearest nodes!
+			for ( int i = 0; i < mp_points.size(); ++i ) {
+
+
+				nodes.get( mp_points.get(i).left_nn ).l_xvel -= mp_points.get(i).length * mp_points.get(i).stress * nodes.get( mp_points.get(i).left_nn ).d_shapef( mp_points.get(i).xpos );
+				nodes.get( mp_points.get(i).right_nn ).l_xvel -= mp_points.get(i).length * mp_points.get(i).stress * nodes.get( mp_points.get(i).right_nn ).d_shapef( mp_points.get(i).xpos );
+
+
+			}//end for
+
+
+			// Then make the quantity have the correct units and
+			// calculate the part that doesn't involve the sum
+			for ( int i = 0; i < nodes.size(); ++i ) {
+
+
+				nodes.get(i).l_xvel /= nodes.get(i).mass;
+				nodes.get(i).l_xvel += nodes.get(i).xvel + Accelerations.external_x(nodes.get(i), t)*dt;
+
+
+			}//end for
+
+
+			
+
 			
 			// Again, fix the boundaries!
-			nodes.get(0).l_xvel = BoundaryConditions.Velocity.Left( nodes.get(0).time );
-			nodes.get(nodes.size()-1).l_xvel = BoundaryConditions.Velocity.Right( nodes.get(nodes.size()-1).time );
+			nodes.get(0).l_xvel = BoundaryConditions.Velocity.Left( t );
+			nodes.get(nodes.size()-1).l_xvel = BoundaryConditions.Velocity.Right( t );
 
 
 
@@ -120,12 +170,15 @@ public class SimUpdate {
 		) {
 
 
+			// Strain rate is just sum_{nodes l} v_l d_shapef_l (xpos)
+			// For linear shape functions, becomes two terms
 			for ( int i = 0; i < mps.size(); ++i ) {
 
 
-				mps.get(i).strain += MPMMath.ParticleStrainRate(mps.get(i), nodes)*dt;
-	
-	
+				mps.get(i).strain += nodes.get( mps.get(i).left_nn ).xvel * nodes.get( mps.get(i).left_nn ).d_shapef( mps.get(i).xpos )*dt;
+				mps.get(i).strain += nodes.get( mps.get(i).right_nn ).xvel * nodes.get( mps.get(i).right_nn ).d_shapef( mps.get(i).xpos )*dt;
+
+
 			}//end for
 
 
@@ -145,10 +198,12 @@ public class SimUpdate {
 	) {
 
 
+		// Interpolate it to the particle from the nodes
 		for ( int i = 0; i < mps.size(); ++i ) {
 
 
-			mps.get(i).xvel += MPMMath.LagrDifferSum.XVel(mps.get(i), nodes)*dt;
+			mps.get(i).xvel += (nodes.get( mps.get(i).left_nn ).l_xvel - nodes.get( mps.get(i).left_nn ).xvel  ) * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
+			mps.get(i).xvel += (nodes.get( mps.get(i).right_nn ).l_xvel - nodes.get( mps.get(i).right_nn ).xvel  ) * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
 
 
 		}//end for
@@ -188,10 +243,13 @@ public class SimUpdate {
 	) {
 
 
+		// Only do sum over nearest nodes
+		// Set pnt_xvel to one number and add to it
 		for ( int i = 0; i < mps.size(); ++i ) {
 
 
-			mps.get(i).pnt_xvel = MPMMath.LagrVelSum(mps.get(i), nodes);
+			mps.get(i).pnt_xvel = nodes.get( mps.get(i).left_nn ).l_xvel * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
+			mps.get(i).pnt_xvel += nodes.get( mps.get(i).right_nn ).l_xvel * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
 
 
 		}//end for
@@ -214,14 +272,15 @@ public class SimUpdate {
 
 		public static void Density(
 			List<Node> nodes,
-			List<MaterialPoint> mp_points
+			List<MaterialPoint> mps
 		) {
 
-
+			
+			// Node density = nodemass/length
 			for ( int i = 0; i < nodes.size(); ++i ) {
 
 
-				nodes.get(i).dens = MPMMath.MPWeightSum.Density(nodes.get(i), mp_points);
+				nodes.get(i).dens = nodes.get(i).mass / nodes.get(i).length;
 
 
 			}//end for
@@ -240,22 +299,40 @@ public class SimUpdate {
 
 		public static void XVelocity(
 			List<Node> nodes,
-			List<MaterialPoint> mp_points
+			List<MaterialPoint> mps
 		) {
 
 
+			// Set node velocity to be 0
 			for ( int i = 0; i < nodes.size(); ++i ) {
 
 
-				nodes.get(i).xvel = MPMMath.MPWeightSum.XVelocity(nodes.get(i), mp_points);
+				nodes.get(i).xvel = 0.;
 
 
 			}//end for
 
 
-			// Enforce boundary conditions!
-			nodes.get(0).l_xvel = BoundaryConditions.Velocity.Left( nodes.get(0).time );
-			nodes.get(nodes.size()-1).l_xvel = BoundaryConditions.Velocity.Right( nodes.get(nodes.size()-1).time );
+			// Then over use the material points' nearest nodes
+			// to construct the node velocity
+			for ( int i = 0; i < mps.size(); ++i ) {
+
+
+				nodes.get( mps.get(i).left_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
+				nodes.get( mps.get(i).right_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
+
+
+			}//end for
+
+
+			// Then divide by the mass for every node
+			for ( int i = 0; i < nodes.size(); ++i ) {
+
+
+				nodes.get(i).xvel /= nodes.get(i).mass;
+
+
+			}//end for
 
 
 		}//end Xvelocity
@@ -264,14 +341,37 @@ public class SimUpdate {
 
 		public static void Strain(
 			List<Node> nodes,
-			List<MaterialPoint> mp_points
+			List<MaterialPoint> mps
 		) {
 
 
+			// Set node strain to be 0
 			for ( int i = 0; i < nodes.size(); ++i ) {
 
 
-				nodes.get(i).strain = MPMMath.MPWeightSum.Strain(nodes.get(i), mp_points);
+				nodes.get(i).strain = 0.;
+
+
+			}//end for
+
+
+			// Then over use the material points' nearest nodes
+			// to construct the node velocity
+			for ( int i = 0; i < mps.size(); ++i ) {
+
+
+				nodes.get( mps.get(i).left_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
+				nodes.get( mps.get(i).right_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
+
+
+			}//end for
+
+
+			// Then divide by the mass for every node
+			for ( int i = 0; i < nodes.size(); ++i ) {
+
+
+				nodes.get(i).strain /= nodes.get(i).mass;
 
 
 			}//end for

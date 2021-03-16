@@ -12,10 +12,8 @@
 			stress
 			strain
 			ymodulus
-			function: shapef
-				(linear shape function of a material point)
-			function: d_shapef
-				(derivative of shapef)
+			left_nn
+			right_nn
 */
 
 
@@ -49,68 +47,9 @@ public class MaterialPoint {
 	public double ymodulus;
 
 
-	// Shape function and its derivative
-	public double shapef( double x ) {
-
-
-		double lpoint = this.xpos - this.length;
-		double rpoint = this.xpos - this.length;
-
-		
-		if ( x > lpoint && x <= xpos ) {
-
-			return 1. + (x - this.xpos)/this.length;
-
-		}
-		else if ( x > xpos && x < rpoint ) {
-		
-			return 1. - (x - this.xpos)/this.length;
-
-		}
-		else {
-
-			return 0.;
-
-		}//end if
-
-
-	}//end shapef
-
-	public double d_shapef( double x ) {
-
-
-		double lpoint = this.xpos - this.length;
-		double rpoint = this.xpos - this.length;
-
-		
-		if ( x > lpoint && x < xpos ) {
-
-			return 1./this.length;
-
-		}
-		else if ( x > xpos && x < rpoint ) {
-		
-			return -1./this.length;
-
-		}
-		else if ( x == lpoint) {
-
-			return 0.5/this.length;
-
-		}
-		else if (x == rpoint) {
-
-			return -0.5/this.length;
-
-		}
-		else {
-
-			return 0.;
-
-		}//end if
-
-
-	}//end d_shapef
+	// Nearest neighbor nodes
+	public int left_nn;
+	public int right_nn;
 
 
 }//end MaterialPoint

@@ -20,13 +20,18 @@ public class DataWrite {
 	public static void Node (
 		String filename,
 		List<String> titles,
-		List<List<Node>> myData
+		List<List<Node>> myData,
+		double dt
 	) throws IOException {
+
+
+		double t = 0.;
 	
 		FileWriter myFile = new FileWriter(filename);
 
 
 		// Write titles
+		myFile.append( "time," );
 		for (int i = 0; i < titles.size(); ++i) {
 
 
@@ -54,7 +59,7 @@ public class DataWrite {
 			for (int j = 0; j < myData.get(i).size(); ++j) {
 
 
-				myFile.append( String.valueOf(myData.get(i).get(j).time) );
+				myFile.append( String.valueOf(t) );
 				myFile.append( ',' );
 				myFile.append( String.valueOf(myData.get(i).get(j).xpos) );
 				myFile.append( ',' );
@@ -69,6 +74,9 @@ public class DataWrite {
 
 
 			}//end for
+
+
+			t += dt;
 
 
 		}//end for
@@ -91,13 +99,18 @@ public class DataWrite {
 	public static void MaterialPoint (
 		String filename,
 		List<String> titles,
-		List<List<MaterialPoint>> myData
+		List<List<MaterialPoint>> myData,
+		double dt
 	) throws IOException {
 	
+
+		double t = 0.;
+
 		FileWriter myFile = new FileWriter(filename);
 
 
 		// Write titles
+		myFile.append( "time," );
 		for (int i = 0; i < titles.size(); ++i) {
 
 
@@ -125,7 +138,7 @@ public class DataWrite {
 			for (int j = 0; j < myData.get(i).size(); ++j) {
 
 
-				myFile.append( String.valueOf(myData.get(i).get(j).time) );
+				myFile.append( String.valueOf(t) );
 				myFile.append( ',' );
 				myFile.append( String.valueOf(myData.get(i).get(j).xpos) );
 				myFile.append( ',' );
@@ -140,6 +153,9 @@ public class DataWrite {
 
 
 			}//end for
+
+
+			t += dt;
 
 
 		}//end for

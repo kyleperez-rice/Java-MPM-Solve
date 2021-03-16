@@ -27,7 +27,6 @@ public class Node {
 
 
 	// Attributes of a node
-	public double time; // Current time
 	public double length; // Length of the node
 
 	public double xpos;

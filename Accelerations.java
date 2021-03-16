@@ -14,13 +14,13 @@ public class Accelerations {
 
 
 	// static makes sure we don't have to make a new class member for this system to call function
-	public static double ext_x( Node n ) {
+	public static double external_x( Node n, double t ) {
 
 
 		return 0.;
 
 
-	}//end ext_x
+	}//end external_x
 
 
 

@@ -9,7 +9,6 @@ public class Initializations {
 	// geometry, and step size
 	public static void InitializeMesh(
 		List<Node> nodes,
-		int num_nodes,
 		double xlowbnd,
 		double dx
 	) {
@@ -19,8 +18,7 @@ public class Initializations {
 		for (int i = 0; i < nodes.size(); ++i) {
 
 
-			// Initialize time and length (immutable mostly)
-			nodes.get(i).time = 0.;
+			// Initialize length (immutable mostly)
 			nodes.get(i).length = dx;
 
 			// Set the position based on our initial xlowbnd
@@ -56,11 +54,10 @@ public class Initializations {
 		// Note: this is the proper size. We don't have any mps
 		// before the first node, or after the second one
 		// this means we have nodes.size() - 1 # of cells
-		for (int i = 0; i < (nodes.size() - 1)*num_mps; ++i) {
+		for (int i = 0; i < mp_points.size(); ++i) {
 
 
-			// Set material point time and length
-			mp_points.get(i).time = 0.;
+			// Set material point length
 			mp_points.get(i).length = dx/(double)num_mps;
 
 			// Set the material point position
