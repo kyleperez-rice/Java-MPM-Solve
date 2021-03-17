@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.*; // Get lists, etc
 
 
@@ -7,7 +8,7 @@ public class MPMSolve {
 
 
 
-	public static void main( String args[] ) {
+	public static void main( String args[] ) throws IOException {
 
 
 		// Our time
@@ -71,7 +72,7 @@ public class MPMSolve {
 
 		// Then make the initial state
 		Initializations.InitializeMesh(nodes, xlowbnd, dx);
-		Initializations.InitializeMaterialPoints(mp_points, nodes, num_mps, dx);
+		Initializations.InitializeMaterialPoints(mp_points, nodes, num_mps, dx, xlowbnd);
 
 
 		// Then get the nearest nodes to our material points
@@ -87,39 +88,64 @@ public class MPMSolve {
 		for ( int tt = 0; tt < tsteps; ++tt ) {
 
 
+			// Save data here!
+			nodeData.add( nodes );
+			mpData.add( mp_points );
+
+
+
 			// First find the lagr xvel for each node
-			SimUpdate.UpdateNodeLagr.XVel(nodes, mp_points, t, dt);
+			SimUpdate.UpdateVelocity(nodes, mp_points, t, dt);
 
 
 			// Then use these Lagrangian quantities to find the Eulerian ones
 			// At the next timestep
 			SimUpdate.UpdateParticle.Strain(mp_points, nodes, dt);
-			SimUpdate.UpdateParticle.XVelocity(mp_points, nodes, dt);
 			SimUpdate.UpdateParticle.Stress(mp_points, nodes, dt);
-
-
-			// Then update the physical velocity of the particle
-			SimUpdate.UpdateParticle.InterpolatedVelocity(mp_points, nodes);
-
-
-			// Then move the particles
-			SimUpdate.MoveParticles(mp_points, dt);
-
-
-			// Next recompute the node masses
-			SimUpdate.ComputeNodeMasses(nodes, mp_points);
 
 
 			// Then update the node quantities
 			SimUpdate.UpdateNode.Density(nodes, mp_points);
-			SimUpdate.UpdateNode.XVelocity(nodes, mp_points);
 			SimUpdate.UpdateNode.Strain(nodes, mp_points);
 			SimUpdate.UpdateNode.Stress(nodes, mp_points);
 
 
 
+			// Advance system in time
+			t += dt;
+
+
+
 		}//end for
 
+
+
+		// Lists for csv labels
+		List<String> mp_titles = Arrays.asList(
+					"xpos",
+					"mass",
+					"strain",
+					"stress",
+					"xvel"
+		);
+
+		List<String> node_titles = Arrays.asList(
+					"xpos",
+					"stress",
+					"strain",
+					"dens",
+					"xvel"	
+		);
+
+
+
+		// Write files
+		DataWrite.Node("test.csv", node_titles, nodeData, dt);
+		DataWrite.MaterialPoint("mp_test.csv", mp_titles, mpData, dt);
+
+
+		// Big data dump
+		Debug.DataDump(nodeData, mpData, dt);
 
 
 	}//end main

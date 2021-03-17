@@ -30,8 +30,11 @@ public class SimUpdate {
 		for ( int i = 0; i < mp_points.size(); ++i ) {
 
 
-			nodes.get( mp_points.get(i).left_nn ).mass += mp_points.get(i).mass * nodes.get( mp_points.get(i).left_nn ).shapef( mp_points.get(i).xpos );
-			nodes.get( mp_points.get(i).right_nn ).mass += mp_points.get(i).mass * nodes.get( mp_points.get(i).right_nn ).shapef( mp_points.get(i).xpos );
+			int left_nn = mp_points.get(i).left_nn;
+			int right_nn = mp_points.get(i).right_nn;
+
+			nodes.get( left_nn ).mass += mp_points.get(i).mass * nodes.get( left_nn ).shapef( mp_points.get(i).xpos );
+			nodes.get( right_nn ).mass += mp_points.get(i).mass * nodes.get( right_nn ).shapef( mp_points.get(i).xpos );
 
 
 		}//end for
@@ -67,79 +70,137 @@ public class SimUpdate {
 
 
 
-
-	// Class that contains functions to update the lagr quantities of a node that
-	// evolve via an Euler-type equation
-	public static class UpdateNodeLagr {
-
-
-		// Updates lagr xvelocity of a node
-		public static void XVel(
-			List<Node> nodes,
-			List<MaterialPoint> mp_points,
-			double t,
-			double dt
-		) {
-
-
-			// Form: l_xvel = xvel + dv/dt * dt for each node l
-			//
-			// d xvel_l / dt = 
-			//	acceleration 
-			//	-1/m * Sum_{p: mps}( vol_p * stress_p * d_shapef_l(x_p) )
-			//	+ 1/m * integral( Stress * shapef, boundary(x) )
-			//
-			// Then, enforce our boundary conditions again!
-
-			
-
-			// First make l_xvel = 0
-			for ( int i = 0; i < nodes.size(); ++i ) {
+	// Updates the velocity, etc of the system
+	//
+	// What we are going to calculate:
+	//	v_p(t+dt) = v_p(t) + Sum_{l: nodes} (v^L_l - v_l)shapef_l(mp xpos)
+	//	pnt_xvel = sum_l v^L shapef(mp xpos)
+	// v_l(t+dt) = 1/m_l * sum_p m_p * v_p(t+dt) * shapef(xpos) 
+	public static void UpdateVelocity(
+		List<Node> nodes,
+		List<MaterialPoint> mps,
+		double t,
+		double dt
+	) {
 
 
-				nodes.get(i).mass = 0.;
+		// First compute v_p = v_p = sum_{l: nodes}v_l shapef_l()
+		for ( int i = 0; i < mps.size(); ++i ) {
 
 
-			}//end for
+			int left_nn = mps.get(i).left_nn;
+			int right_nn = mps.get(i).right_nn;
+
+			mps.get(i).xvel -= nodes.get( left_nn ).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos ) * dt / nodes.get( left_nn ).mass;
+			mps.get(i).xvel -= nodes.get( right_nn ).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos ) * dt/nodes.get( right_nn ).mass;
 
 
-			// Then do the sum over the material points
-			// Only need to sum over the nearest nodes!
-			for ( int i = 0; i < mp_points.size(); ++i ) {
+		}//end for
 
 
-				nodes.get( mp_points.get(i).left_nn ).l_xvel -= mp_points.get(i).length * mp_points.get(i).stress * nodes.get( mp_points.get(i).left_nn ).d_shapef( mp_points.get(i).xpos );
-				nodes.get( mp_points.get(i).right_nn ).l_xvel -= mp_points.get(i).length * mp_points.get(i).stress * nodes.get( mp_points.get(i).right_nn ).d_shapef( mp_points.get(i).xpos );
+		// Then compute v^L = v + dv/dt * dt
+		// = v^n + f*dt - dt/m * sum_{p: mps} v_p * sigma_p * d_shapef(mpxpos)
+		//
+		// First: the external forces
+		for ( int i = 0; i < nodes.size(); ++i ) {
 
 
-			}//end for
+			nodes.get(i).xvel += Accelerations.external_x( nodes.get(i), t )*dt;
 
 
-			// Then make the quantity have the correct units and
-			// calculate the part that doesn't involve the sum
-			for ( int i = 0; i < nodes.size(); ++i ) {
+		}//end for
 
 
-				nodes.get(i).l_xvel /= nodes.get(i).mass;
-				nodes.get(i).l_xvel += nodes.get(i).xvel + Accelerations.external_x(nodes.get(i), t)*dt;
+		// Then include the material point constributions
+		// only using the closest nodes to each point
+		for ( int i = 0; i < mps.size(); ++i ) {
 
 
-			}//end for
+			int left_nn = mps.get(i).left_nn;
+			int right_nn = mps.get(i).right_nn;
+
+			nodes.get( left_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( left_nn ).d_shapef( mps.get(i).xpos );
+			nodes.get( right_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( right_nn ).d_shapef( mps.get(i).xpos );
 
 
-			
-
-			
-			// Again, fix the boundaries!
-			nodes.get(0).l_xvel = BoundaryConditions.Velocity.Left( t );
-			nodes.get(nodes.size()-1).l_xvel = BoundaryConditions.Velocity.Right( t );
+		}//end for
 
 
+		// Then enforce the boundary conditions!
+		nodes.get(0).xvel = BoundaryConditions.Velocity.Left(t);
+		nodes.get( nodes.size() - 1 ).xvel = BoundaryConditions.Velocity.Right(t);
 
-		}//end XVel
+
+		// Next, finish computing v_p(t+dt)
+		// Just need to do v_p = v_p + sum_l v_l * shapef()
+		// By pnt_xvel = sum_l v^L * shapef()
+		// v_p = v_p + pnt_xvel
+		for ( int i = 0; i < mps.size(); ++i ) {
 
 
-	}//end UpdateNodeLagr
+			int left_nn = mps.get(i).left_nn;
+			int right_nn = mps.get(i).right_nn;
+
+			mps.get(i).pnt_xvel = nodes.get( left_nn ).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos );
+			mps.get(i).pnt_xvel += nodes.get( right_nn ).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos );
+
+			mps.get(i).xvel += mps.get(i).pnt_xvel;
+
+
+		}//end for
+
+
+
+		// Then move the particles and recompute node masses
+		SimUpdate.MoveParticles(mps, dt);
+		SimUpdate.ComputeNodeMasses(nodes, mps);
+
+
+		// The compute the nodal velocity at the future time
+		// Do this by setting nodal velocity to be zero, then
+		// running sum over material points and dividing by mass
+		// And fixing boundaries one more time
+		for ( int i = 0; i < nodes.size(); ++i ) {
+
+
+			nodes.get(i).xvel = 0.;
+
+
+		}//end for
+
+
+		for ( int i = 0; i < mps.size(); ++i ) {
+
+
+			int left_nn = mps.get(i).left_nn;
+			int right_nn = mps.get(i).right_nn;
+
+			nodes.get( left_nn ).xvel += mps.get(i).mass * nodes.get( left_nn ).shapef( mps.get(i).xpos );
+			nodes.get( right_nn ).xvel += mps.get(i).mass * nodes.get( right_nn ).shapef( mps.get(i).xpos );
+
+
+		}//end for
+
+
+		// Then divide by mass
+		for ( int i = 0; i < nodes.size(); ++i ) {
+
+
+			nodes.get(i).xvel /= nodes.get(i).mass;
+
+
+		}//end for
+
+
+		// Enforce boundary conditions one more time!
+		nodes.get(0).xvel = BoundaryConditions.Velocity.Left(t);
+		nodes.get( nodes.size() - 1 ).xvel = BoundaryConditions.Velocity.Right(t);
+
+
+	}//end UpdateVelocity
+
+
+	
 
 
 
@@ -175,8 +236,11 @@ public class SimUpdate {
 			for ( int i = 0; i < mps.size(); ++i ) {
 
 
-				mps.get(i).strain += nodes.get( mps.get(i).left_nn ).xvel * nodes.get( mps.get(i).left_nn ).d_shapef( mps.get(i).xpos )*dt;
-				mps.get(i).strain += nodes.get( mps.get(i).right_nn ).xvel * nodes.get( mps.get(i).right_nn ).d_shapef( mps.get(i).xpos )*dt;
+				int left_nn = mps.get(i).left_nn;
+				int right_nn = mps.get(i).right_nn;
+
+				mps.get(i).strain += nodes.get( left_nn ).xvel * nodes.get( left_nn ).d_shapef( mps.get(i).xpos )*dt;
+				mps.get(i).strain += nodes.get( right_nn ).xvel * nodes.get( right_nn ).d_shapef( mps.get(i).xpos )*dt;
 
 
 			}//end for
@@ -185,77 +249,30 @@ public class SimUpdate {
 		}//end Strain
 
 
+
+		// Update the particle stress
+		public static void Stress (
+			List<MaterialPoint> mps,
+			List<Node> nodes,
+			double dt
+		) {
+
+
+			for ( int i = 0; i < mps.size(); ++i ) {
+
+
+				// Not very general; relies explicitly on stress-strain relation!
+				mps.get(i).stress = mps.get(i).strain * mps.get(i).ymodulus;
+
+
+			}//end for
+
+
+		}//end Stress
+
+
+
 	}//end UpdateParticle
-
-
-
-
-	// Update the particle xvelocity
-	public static void XVelocity (
-		List<MaterialPoint> mps,
-		List<Node> nodes,
-		double dt
-	) {
-
-
-		// Interpolate it to the particle from the nodes
-		for ( int i = 0; i < mps.size(); ++i ) {
-
-
-			mps.get(i).xvel += (nodes.get( mps.get(i).left_nn ).l_xvel - nodes.get( mps.get(i).left_nn ).xvel  ) * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
-			mps.get(i).xvel += (nodes.get( mps.get(i).right_nn ).l_xvel - nodes.get( mps.get(i).right_nn ).xvel  ) * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
-
-
-		}//end for
-
-
-	}//end XVelocity
-
-
-
-	// Update the particle stress
-	public static void Stress (
-		List<MaterialPoint> mps,
-		List<Node> nodes,
-		double dt
-	) {
-
-
-		for ( int i = 0; i < mps.size(); ++i ) {
-
-
-			// Not very general; relies explicitly on stress-strain relation!
-			mps.get(i).stress = mps.get(i).strain * mps.get(i).ymodulus;
-
-
-		}//end for
-
-
-	}//end Stress
-
-
-
-	// Update the particle's physical velocity via interpolation with the nodes
-	public static void InterpolatedVelocity (
-		List<MaterialPoint> mps,
-		List<Node> nodes,
-		double dt
-	) {
-
-
-		// Only do sum over nearest nodes
-		// Set pnt_xvel to one number and add to it
-		for ( int i = 0; i < mps.size(); ++i ) {
-
-
-			mps.get(i).pnt_xvel = nodes.get( mps.get(i).left_nn ).l_xvel * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
-			mps.get(i).pnt_xvel += nodes.get( mps.get(i).right_nn ).l_xvel * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
-
-
-		}//end for
-
-
-	}//end InterpolatedVelocity
 
 
 
@@ -318,8 +335,11 @@ public class SimUpdate {
 			for ( int i = 0; i < mps.size(); ++i ) {
 
 
-				nodes.get( mps.get(i).left_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
-				nodes.get( mps.get(i).right_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
+				int left_nn = mps.get(i).left_nn;
+				int right_nn = mps.get(i).right_nn;
+
+				nodes.get( left_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos );
+				nodes.get( right_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos );
 
 
 			}//end for
@@ -360,8 +380,11 @@ public class SimUpdate {
 			for ( int i = 0; i < mps.size(); ++i ) {
 
 
-				nodes.get( mps.get(i).left_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( mps.get(i).left_nn ).shapef( mps.get(i).xpos );
-				nodes.get( mps.get(i).right_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( mps.get(i).right_nn ).shapef( mps.get(i).xpos );
+				int left_nn = mps.get(i).left_nn;
+				int right_nn = mps.get(i).right_nn;
+
+				nodes.get( left_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( left_nn ).shapef( mps.get(i).xpos );
+				nodes.get( right_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( right_nn ).shapef( mps.get(i).xpos );
 
 
 			}//end for

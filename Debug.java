@@ -365,7 +365,8 @@ public class Debug {
 					) {
 
 						mp_indices.add(j);
-						mp_used.get(j) = true;
+						//mp_used.get(j) = true;
+						mp_used.set(j, true);
 
 					}//end if
 

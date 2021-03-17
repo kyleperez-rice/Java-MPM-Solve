@@ -46,7 +46,8 @@ public class Initializations {
 		List<MaterialPoint> mp_points,
 		List<Node> nodes,
 		int num_mps,
-		double dx
+		double dx,
+		double xmin
 	) {
 
 
@@ -90,35 +91,43 @@ public class Initializations {
 			mp_points.get(i).strain = 0.;
 			//mp_points.get(i).ymodulus = 0.; // In case you don't have constant Y
 
-			// For constant Ymodulus, this works, but if you have a nonzero distribution, don't do this!
-			mp_points.get(i).ymodulus = InitialState.YModulus( mp_points.get(i).xpos ); 
+
+		}//end for
 
 
-			// Initialize density, etc by summing over the nodes' values
-			// weighted by their shape functions evaluated at the
-			// material point position
-			//
-			// IE:
-			// q_p = Sum_(n: all nodes) q_n * shapef_n(x_p)
-			for (int j = 0; j < nodes.size(); ++j) {
+		// Get the nearest nodes of the system
+		MPMMath.GetNearNodes(mp_points, dx, xmin);
 
 
-				mp_points.get(i).mass += nodes.get(j).dens * nodes.get(j).shapef( mp_points.get(i).xpos ); // This quantity is a density, not a mass
-				mp_points.get(i).xvel += nodes.get(j).xvel * nodes.get(j).shapef( mp_points.get(i).xpos );
-				mp_points.get(i).strain += nodes.get(j).strain * nodes.get(j).shapef( mp_points.get(i).xpos );
-
-				// Use below if you don't necessarily have stress = Y*strain for constant Y
-				// mp_points.get(i).stress += nodes.get(j).stress * nodes.get(j).shapef( mp_points.get(i).xpos );
-				// mp_points.get(i).ymodulus += nodes.get(j).ymodulus * nodes.get(j).shapef( mp_points.get(i).xpos );
+		// Then use the nearest nodes to populate the material point quantities
+		for ( int i = 0; i < mp_points.size(); ++i ) {
 
 
-			}//end for
+			int left_nn = mp_points.get(i).left_nn;
+			int right_nn = mp_points.get(i).right_nn;
 
 
-			// Set the mass and strain
-			// README: Strain set by sigma = y * epsilon
-			//	If you have another relation, do something else!
-			mp_points.get(i).mass = mp_points.get(i).mass * mp_points.get(i).length;
+			// Mass
+			mp_points.get(i).mass += nodes.get( left_nn ).dens * nodes.get( left_nn ).shapef( mp_points.get(i).xpos );
+			mp_points.get(i).mass += nodes.get( right_nn ).dens * nodes.get( right_nn ).shapef( mp_points.get(i).xpos );
+			mp_points.get(i).mass *= mp_points.get(i).length;
+
+
+			// Velocity
+			mp_points.get(i).xvel += nodes.get( left_nn ).xvel * nodes.get( left_nn ).shapef( mp_points.get(i).xpos );
+			mp_points.get(i).xvel += nodes.get( right_nn ).xvel * nodes.get( right_nn ).shapef( mp_points.get(i).xpos );
+
+
+			// Strain
+			mp_points.get(i).strain += nodes.get( left_nn ).strain * nodes.get( left_nn ).shapef( mp_points.get(i).xpos );
+			mp_points.get(i).strain += nodes.get( right_nn ).strain * nodes.get( right_nn ).shapef( mp_points.get(i).xpos );
+
+
+			// Young's Modulus
+			mp_points.get(i).ymodulus = InitialState.YModulus( mp_points.get(i).xpos );
+
+
+			// Stress
 			mp_points.get(i).stress = mp_points.get(i).strain * mp_points.get(i).ymodulus;
 
 

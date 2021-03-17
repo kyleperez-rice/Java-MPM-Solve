@@ -39,8 +39,10 @@ public class MPMMath {
 			double approx_index = (mps.get(i).xpos - xmin)/dx;
 
 			// The nerest nodes
-			mps.get(i).left_nn = Math.floor( approx_index );
-			mps.get(i).right_nn = Math.ceil( approx_index );
+			// Java's floor functions map from double to double?
+			// Make no sense
+			mps.get(i).left_nn = (int)Math.floor( approx_index );
+			mps.get(i).right_nn = (int)Math.ceil( approx_index );
 
 
 		}//end for
