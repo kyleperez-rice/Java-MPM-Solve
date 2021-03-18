@@ -11,6 +11,11 @@ public class MPMSolve {
 	public static void main( String args[] ) throws IOException {
 
 
+//---------------------------------------------------------------
+		// CONSTANTS and OPTIONS
+
+
+
 		// Our time
 		double t = 0.;
 
@@ -29,13 +34,26 @@ public class MPMSolve {
 		// Particle properties
 		int num_mps = 2; // Number of mps we have in a cell
 
+		boolean move_particles = true;
+
 
 
 		// Time properties
-		double tmax = 0.1; // Max time to solve until
-		int tsteps = 1000; // Number of steps to take
+		double tmax = 0.3; // Max time to solve until
+		int tsteps = 3000; // Number of steps to take
 
 		double dt = tmax/(double)tsteps; // Size of a timestep
+
+
+
+		boolean debug_file = false;
+
+
+
+
+//-----------------------------------------------------------------
+		// Creating data arrays
+
 
 
 		// Our current-time data
@@ -65,7 +83,12 @@ public class MPMSolve {
 
 
 		}//end for
-		
+
+
+
+
+//-----------------------------------------------------------------
+		// Initializing our system		
 
 
 
@@ -73,6 +96,7 @@ public class MPMSolve {
 		// Then make the initial state
 		Initializations.InitializeMesh(nodes, xlowbnd, dx);
 		Initializations.InitializeMaterialPoints(mp_points, nodes, num_mps, dx, xlowbnd);
+		
 
 
 		// Then get the nearest nodes to our material points
@@ -83,26 +107,29 @@ public class MPMSolve {
 
 
 
+//-----------------------------------------------------------------
+		// Time evolution
 
-		// Then evolve the system in time
-		for ( int tt = 0; tt < tsteps; ++tt ) {
-
-
-			// Save data here!
-			nodeData.add( nodes );
-			mpData.add( mp_points );
 
 
 
-			// First find the lagr xvel for each node
-			SimUpdate.UpdateVelocity(nodes, mp_points, t, dt);
+		// Then evolve the system in time
+		for ( int tt = 0; tt < 1; ++tt ) {
 
 
 			// Then use these Lagrangian quantities to find the Eulerian ones
 			// At the next timestep
 			SimUpdate.UpdateParticle.Strain(mp_points, nodes, dt);
 			SimUpdate.UpdateParticle.Stress(mp_points, nodes, dt);
+			SimUpdate.UpdateVelocity(nodes, mp_points, t, dt, move_particles);
 
+			for ( int i = 0; i < nodes.size(); ++i ) {
+
+
+				System.out.println( String.valueOf( nodes.get(i).xvel ) );
+	
+	
+			}//end for
 
 			// Then update the node quantities
 			SimUpdate.UpdateNode.Density(nodes, mp_points);
@@ -113,6 +140,11 @@ public class MPMSolve {
 
 			// Advance system in time
 			t += dt;
+
+
+			// Save data here!
+			nodeData.add( nodes );
+			mpData.add( mp_points );
 
 
 
@@ -145,7 +177,12 @@ public class MPMSolve {
 
 
 		// Big data dump
-		Debug.DataDump(nodeData, mpData, dt);
+		if (debug_file == true) {
+
+			Debug.DataDump(nodeData, mpData, dt);
+
+		}//end if
+		
 
 
 	}//end main

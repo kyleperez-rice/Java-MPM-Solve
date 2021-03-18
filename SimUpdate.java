@@ -80,7 +80,8 @@ public class SimUpdate {
 		List<Node> nodes,
 		List<MaterialPoint> mps,
 		double t,
-		double dt
+		double dt,
+		boolean move_particles
 	) {
 
 
@@ -91,8 +92,8 @@ public class SimUpdate {
 			int left_nn = mps.get(i).left_nn;
 			int right_nn = mps.get(i).right_nn;
 
-			mps.get(i).xvel -= nodes.get( left_nn ).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos ) * dt / nodes.get( left_nn ).mass;
-			mps.get(i).xvel -= nodes.get( right_nn ).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos ) * dt/nodes.get( right_nn ).mass;
+			mps.get(i).xvel -= nodes.get( left_nn ).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos ) * dt;
+			mps.get(i).xvel -= nodes.get( right_nn ).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos ) * dt;
 
 
 		}//end for
@@ -119,8 +120,8 @@ public class SimUpdate {
 			int left_nn = mps.get(i).left_nn;
 			int right_nn = mps.get(i).right_nn;
 
-			nodes.get( left_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( left_nn ).d_shapef( mps.get(i).xpos );
-			nodes.get( right_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( right_nn ).d_shapef( mps.get(i).xpos );
+			nodes.get( left_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( left_nn ).d_shapef( mps.get(i).xpos ) * dt / nodes.get( left_nn ).mass;
+			nodes.get( right_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( right_nn ).d_shapef( mps.get(i).xpos ) * dt / nodes.get( right_nn ).mass;
 
 
 		}//end for
@@ -152,8 +153,13 @@ public class SimUpdate {
 
 
 		// Then move the particles and recompute node masses
-		SimUpdate.MoveParticles(mps, dt);
-		SimUpdate.ComputeNodeMasses(nodes, mps);
+		if ( move_particles == true ) {
+
+			SimUpdate.MoveParticles(mps, dt);
+			SimUpdate.ComputeNodeMasses(nodes, mps);
+
+		}//end if
+		
 
 
 		// The compute the nodal velocity at the future time
@@ -175,8 +181,8 @@ public class SimUpdate {
 			int left_nn = mps.get(i).left_nn;
 			int right_nn = mps.get(i).right_nn;
 
-			nodes.get( left_nn ).xvel += mps.get(i).mass * nodes.get( left_nn ).shapef( mps.get(i).xpos );
-			nodes.get( right_nn ).xvel += mps.get(i).mass * nodes.get( right_nn ).shapef( mps.get(i).xpos );
+			nodes.get( left_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos );
+			nodes.get( right_nn ).xvel += mps.get(i).mass * mps.get(i).xvel *  nodes.get( right_nn ).shapef( mps.get(i).xpos );
 
 
 		}//end for
@@ -229,7 +235,6 @@ public class SimUpdate {
 			List<Node> nodes,
 			double dt
 		) {
-
 
 			// Strain rate is just sum_{nodes l} v_l d_shapef_l (xpos)
 			// For linear shape functions, becomes two terms

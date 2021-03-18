@@ -38,7 +38,7 @@ public class InitialState {
 
 		//double amplitude = 1.;
 
-		return 1.;
+		return 0.;
 
 
 	}//end Strain
