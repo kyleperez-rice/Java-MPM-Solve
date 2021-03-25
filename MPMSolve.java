@@ -1,4 +1,4 @@
-import java.io.IOException;
+import java.io.*;
 import java.util.*; // Get lists, etc
 
 
@@ -22,7 +22,7 @@ public class MPMSolve {
 
 
 		// Geometry of the system
-		int num_nodes = 51;
+		int num_nodes = 201;
 
 		double xlowbnd = 0.; // xpoint we start at
 		double xhighbnd = 1.; // xpoint we end at
@@ -46,8 +46,70 @@ public class MPMSolve {
 
 
 
-		boolean debug_file = false;
 
+//-------------------------------------------------------------------------------------------------------
+
+
+
+
+		// Data writing properties
+		String node_csv_name = "test.csv";
+		String mp_csv_name = "mp_test.csv";
+
+		// Make a big debug file?
+		boolean debug_file = true;
+
+
+		// Our data files
+		FileWriter nodeData = new FileWriter(node_csv_name);
+		FileWriter mpData = new FileWriter(mp_csv_name);
+		FileWriter debugData = new FileWriter("debug.txt");
+
+		if ( debug_file == false ) {
+
+			debugData.append("I don't know how to limit my output without making a file in the first place.\n");
+			debugData.append("I have to declare the file in my main's scope or else I get an error since it will\n");
+			debugData.append("deallocate the variable if it's in an 'if' statement. ;_;\n");
+			debugData.flush();
+			debugData.close();		
+
+		}//end if
+
+		
+
+
+		// Lists for csv labels
+		//	See documentation on when to change
+		List<String> node_titles = Arrays.asList(
+					"time",
+					"xpos",
+					"stress",
+					"strain",
+					"dens",
+					"xvel"	
+		);
+
+		List<String> mp_titles = Arrays.asList(
+					"time",
+					"xpos",
+					"mass",
+					"strain",
+					"stress",
+					"xvel"
+		);
+
+		
+
+
+		// Give our data files some headers!
+		DataWrite.MakeHeaders(nodeData, node_titles);
+		DataWrite.MakeHeaders(mpData, mp_titles);
+
+		if ( debug_file == true ) {
+
+			Debug.DataDumpHeader(debugData);
+
+		}//end if
 
 
 
@@ -59,11 +121,6 @@ public class MPMSolve {
 		// Our current-time data
 		List<Node> nodes = new ArrayList<Node>();
 		List<MaterialPoint> mp_points = new ArrayList<MaterialPoint>();
-
-
-		// Our data for all times
-		List<List<Node>> nodeData = new ArrayList<List<Node>>();
-		List<List<MaterialPoint>> mpData = new ArrayList<List<MaterialPoint>>();
 
 
 
@@ -114,22 +171,27 @@ public class MPMSolve {
 
 
 		// Then evolve the system in time
-		for ( int tt = 0; tt < 1; ++tt ) {
+		for ( int tt = 0; tt < tsteps; ++tt ) {
+
+
+			// First save our data
+			DataWrite.Node(nodeData, nodes, t);
+			DataWrite.MaterialPoint(mpData, mp_points, t);
+
+			if ( debug_file == true ) {
+
+				Debug.DataDump(debugData, nodes, mp_points, t);
+
+			}//end if
 
 
 			// Then use these Lagrangian quantities to find the Eulerian ones
 			// At the next timestep
 			SimUpdate.UpdateParticle.Strain(mp_points, nodes, dt);
-			SimUpdate.UpdateParticle.Stress(mp_points, nodes, dt);
 			SimUpdate.UpdateVelocity(nodes, mp_points, t, dt, move_particles);
+			SimUpdate.UpdateParticle.Stress(mp_points, nodes, dt);
 
-			for ( int i = 0; i < nodes.size(); ++i ) {
 
-
-				System.out.println( String.valueOf( nodes.get(i).xvel ) );
-	
-	
-			}//end for
 
 			// Then update the node quantities
 			SimUpdate.UpdateNode.Density(nodes, mp_points);
@@ -142,46 +204,45 @@ public class MPMSolve {
 			t += dt;
 
 
-			// Save data here!
-			nodeData.add( nodes );
-			mpData.add( mp_points );
-
 
 
 		}//end for
 
 
-
-		// Lists for csv labels
-		List<String> mp_titles = Arrays.asList(
-					"xpos",
-					"mass",
-					"strain",
-					"stress",
-					"xvel"
-		);
-
-		List<String> node_titles = Arrays.asList(
-					"xpos",
-					"stress",
-					"strain",
-					"dens",
-					"xvel"	
-		);
+		// Final save of the data
+		DataWrite.Node(nodeData, nodes, t);
+		DataWrite.MaterialPoint(mpData, mp_points, t);
 
 
 
-		// Write files
-		DataWrite.Node("test.csv", node_titles, nodeData, dt);
-		DataWrite.MaterialPoint("mp_test.csv", mp_titles, mpData, dt);
+
+		// Flush and close our files
+		nodeData.flush();
+		mpData.flush();
+
+		nodeData.close();
+		mpData.close();
+
+
+		if ( debug_file == true)  {
+
+			debugData.flush();
+			debugData.close();
+
+		}//end if
+
+
+
+		
+
 
 
 		// Big data dump
-		if (debug_file == true) {
+		//if (debug_file == true) {
 
-			Debug.DataDump(nodeData, mpData, dt);
+		//	Debug.DataDump(nodeData, mpData, dt);
 
-		}//end if
+		//}//end if
 		
 
 

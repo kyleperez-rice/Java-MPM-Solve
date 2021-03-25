@@ -85,15 +85,15 @@ public class SimUpdate {
 	) {
 
 
-		// First compute v_p = v_p = sum_{l: nodes}v_l shapef_l()
+		// First compute v_p = v_p - sum_{l: nodes}v_l shapef_l()
 		for ( int i = 0; i < mps.size(); ++i ) {
 
 
 			int left_nn = mps.get(i).left_nn;
 			int right_nn = mps.get(i).right_nn;
 
-			mps.get(i).xvel -= nodes.get( left_nn ).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos ) * dt;
-			mps.get(i).xvel -= nodes.get( right_nn ).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos ) * dt;
+			mps.get(i).xvel -= nodes.get( left_nn ).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos );
+			mps.get(i).xvel -= nodes.get( right_nn ).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos );
 
 
 		}//end for
@@ -112,7 +112,7 @@ public class SimUpdate {
 		}//end for
 
 
-		// Then include the material point constributions
+		// Then include the material point contributions
 		// only using the closest nodes to each point
 		for ( int i = 0; i < mps.size(); ++i ) {
 
@@ -319,51 +319,6 @@ public class SimUpdate {
 
 
 
-		public static void XVelocity(
-			List<Node> nodes,
-			List<MaterialPoint> mps
-		) {
-
-
-			// Set node velocity to be 0
-			for ( int i = 0; i < nodes.size(); ++i ) {
-
-
-				nodes.get(i).xvel = 0.;
-
-
-			}//end for
-
-
-			// Then over use the material points' nearest nodes
-			// to construct the node velocity
-			for ( int i = 0; i < mps.size(); ++i ) {
-
-
-				int left_nn = mps.get(i).left_nn;
-				int right_nn = mps.get(i).right_nn;
-
-				nodes.get( left_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( left_nn ).shapef( mps.get(i).xpos );
-				nodes.get( right_nn ).xvel += mps.get(i).mass * mps.get(i).xvel * nodes.get( right_nn ).shapef( mps.get(i).xpos );
-
-
-			}//end for
-
-
-			// Then divide by the mass for every node
-			for ( int i = 0; i < nodes.size(); ++i ) {
-
-
-				nodes.get(i).xvel /= nodes.get(i).mass;
-
-
-			}//end for
-
-
-		}//end Xvelocity
-
-
-
 		public static void Strain(
 			List<Node> nodes,
 			List<MaterialPoint> mps
@@ -388,8 +343,8 @@ public class SimUpdate {
 				int left_nn = mps.get(i).left_nn;
 				int right_nn = mps.get(i).right_nn;
 
-				nodes.get( left_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( left_nn ).shapef( mps.get(i).xpos );
-				nodes.get( right_nn ).xvel += mps.get(i).mass * mps.get(i).strain * nodes.get( right_nn ).shapef( mps.get(i).xpos );
+				nodes.get( left_nn ).strain += mps.get(i).mass * mps.get(i).strain * nodes.get( left_nn ).shapef( mps.get(i).xpos );
+				nodes.get( right_nn ).strain += mps.get(i).mass * mps.get(i).strain * nodes.get( right_nn ).shapef( mps.get(i).xpos );
 
 
 			}//end for

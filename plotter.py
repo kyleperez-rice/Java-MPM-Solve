@@ -7,7 +7,7 @@ import numpy as np
 from plot_constants import *
 
 
-mesh_data = pd.read_csv(r'/home/kyleperez/javastuff/admpm/test.csv', header=0)
+mesh_data = pd.read_csv(r'/home/kyleperez/javastuff/admpm/alpha/test.csv', header=0)
 
 
 def analytic_solution(type, x, t):
@@ -142,8 +142,8 @@ def animation(i):
 	x = np.array(mesh_data['xpos'][num_nodes*i : num_nodes*(i+1)])
 	
 	#y = mesh_data['strain'][num_nodes*i: num_nodes*(i+1)]
-	y = mesh_data['dens'][num_nodes*i: num_nodes*(i+1)]
-	#y = mesh_data['xvel'][num_nodes*i: num_nodes*(i+1)]
+	#y = mesh_data['dens'][num_nodes*i: num_nodes*(i+1)]
+	y = mesh_data['xvel'][num_nodes*i: num_nodes*(i+1)]
 
 	time = i*dt
 	
@@ -151,18 +151,18 @@ def animation(i):
 	ax.plot(x, y, '-', label='Simulation')
 
 	#ax.plot(x, analytic_solution('Strain', x, time), '--', label='Analytic')
-	ax.plot(x, analytic_solution('Density', x, time), '--', label='Analytic')
-	#ax.plot(x, analytic_solution('Xvel', x, time), '--', label='Analytic')
+	#ax.plot(x, analytic_solution('Density', x, time), '--', label='Analytic')
+	ax.plot(x, analytic_solution('Xvel', x, time), '--', label='Analytic')
 	ax.legend()
 	
 	#Works for Stress/Strain
 	#ax.set(ylim = [-0.015, 0.015], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Strain',title='Strain v x')
 	
 	#Works for Density
-	ax.set(ylim=[0.985, 1.015], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Density (g/cm**3)',title='Density v x')
+	#ax.set(ylim=[0.985, 1.015], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Density (g/cm**3)',title='Density v x')
 	
 	#Works for xvel
-	#ax.set(ylim=[-.011, .011], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Velocity (cm/s)',title='Velocity v x')
+	ax.set(ylim=[-.011, .011], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Velocity (cm/s)',title='Velocity v x')
 	
 	
 # the frames=... num can prevent the plot from crashing

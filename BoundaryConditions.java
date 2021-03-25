@@ -36,7 +36,7 @@ public class BoundaryConditions {
 			// Right boundary condition
 			public static double Right( double t ) {
 
-				return 0.;
+				return 0.01 * Math.sin(10. * t);
 
 			}//end Right
 

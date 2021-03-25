@@ -39,12 +39,7 @@ public class Node {
 	public double mass; // Mass of node
 
 	public double xvel; // x velocity
-	//public double yvel;
-	//public double zvel;
 
-	public double l_xvel; // Lagrangian x velocity
-	//public double l_yvel;
-	//public double l_zvel;
 
 	public double stress;
 	public double strain;

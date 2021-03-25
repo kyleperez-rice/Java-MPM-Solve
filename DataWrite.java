@@ -6,6 +6,8 @@ import java.util.List; // Gets us lists
 		class: DataWrite
 			(functions on writing data for analysis)
 			
+			function: MakeHeaders
+				(write headers for csvs)
 			function: Node
 				(Writes out node data to a csv)
 			function: MaterialPoint
@@ -16,158 +18,100 @@ import java.util.List; // Gets us lists
 public class DataWrite {
 	
 
-	// Gets us a csv that describes the node data
-	public static void Node (
-		String filename,
-		List<String> titles,
-		List<List<Node>> myData,
-		double dt
+	public static void MakeHeaders(
+		FileWriter myFile,
+		List<String> titles
 	) throws IOException {
 
 
-		double t = 0.;
-	
-		FileWriter myFile = new FileWriter(filename);
-
-
-		// Write titles
-		myFile.append( "time," );
-		for (int i = 0; i < titles.size(); ++i) {
+		for ( int i = 0; i < titles.size(); ++i ) {
 
 
 			myFile.append( titles.get(i) );
 
 			if ( i != titles.size() - 1 ) {
 
-				myFile.append( ',' );
+				myFile.append(',');
+
+			}
+			else {
+
+				myFile.append('\n');
 
 			}//end if
 
 
 		}//end for
 
-		myFile.append( '\n' );
+
+	}//end MakeHeaders
 
 
-
-		// Then actually write the data
-		// Just go through all the class elements of the system
-		// Do for all point and all times
-		for (int i = 0; i < myData.size(); ++i) {
-
-
-			for (int j = 0; j < myData.get(i).size(); ++j) {
+	// Writes node data to a file at a given time
+	public static void Node(
+		FileWriter nodeData,
+		List<Node> nodes,
+		double t
+	) throws IOException{
 
 
-				myFile.append( String.valueOf(t) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).xpos) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).stress) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).strain) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).dens) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).xvel) );
-				myFile.append( '\n' );
+		
+		// Write the time and node quantities
+		for ( int i = 0; i < nodes.size(); ++i ) {
 
 
-			}//end for
-
-
-			t += dt;
+			nodeData.append( String.valueOf(t) );
+			nodeData.append(',');
+			nodeData.append( String.valueOf(nodes.get(i).xpos) );
+			nodeData.append( ',' );
+			nodeData.append( String.valueOf(nodes.get(i).stress) );
+			nodeData.append( ',' );
+			nodeData.append( String.valueOf(nodes.get(i).strain) );
+			nodeData.append( ',' );
+			nodeData.append( String.valueOf(nodes.get(i).dens) );
+			nodeData.append( ',' );
+			nodeData.append( String.valueOf(nodes.get(i).xvel) );
+			nodeData.append( '\n' );
 
 
 		}//end for
 
+		// Then leave for later
 
-		// Flush and close the file
-		myFile.flush();
-		myFile.close();
-	
-	
 	}//end Node
 
 
 
+	// Write material point data at a given time
+	public static void MaterialPoint(
+		FileWriter mpData,
+		List<MaterialPoint> mps,
+		double t
+	) throws IOException{
 
 
+		// Write material point data
+		for ( int i = 0; i < mps.size(); ++i ) {
 
 
-	// Gets us a csv that describes the node data
-	public static void MaterialPoint (
-		String filename,
-		List<String> titles,
-		List<List<MaterialPoint>> myData,
-		double dt
-	) throws IOException {
-	
-
-		double t = 0.;
-
-		FileWriter myFile = new FileWriter(filename);
-
-
-		// Write titles
-		myFile.append( "time," );
-		for (int i = 0; i < titles.size(); ++i) {
-
-
-			myFile.append( titles.get(i) );
-
-			if ( i != titles.size() - 1 ) {
-
-				myFile.append( ',' );
-
-			}//end if
-
-
-		}//end for
-
-		myFile.append( '\n' );
-
-
-
-		// Then actually write the data
-		// Just go through all the class elements of the system
-		// Do for all point and all times
-		for (int i = 0; i < myData.size(); ++i) {
-
-
-			for (int j = 0; j < myData.get(i).size(); ++j) {
-
-
-				myFile.append( String.valueOf(t) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).xpos) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).mass) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).stress) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).strain) );
-				myFile.append( ',' );
-				myFile.append( String.valueOf(myData.get(i).get(j).xvel) );
-				myFile.append( '\n' );
-
-
-			}//end for
-
-
-			t += dt;
+			mpData.append( String.valueOf(t) );
+			mpData.append(',');
+			mpData.append( String.valueOf(mps.get(i).xpos) );
+			mpData.append( ',' );
+			mpData.append( String.valueOf(mps.get(i).mass) );
+			mpData.append( ',' );
+			mpData.append( String.valueOf(mps.get(i).stress) );
+			mpData.append( ',' );
+			mpData.append( String.valueOf(mps.get(i).strain) );
+			mpData.append( ',' );
+			mpData.append( String.valueOf(mps.get(i).xvel) );
+			mpData.append( '\n' );
 
 
 		}//end for
 
 
-		// Flush and close the file
-		myFile.flush();
-		myFile.close();
-	
-	
-	}//end Node
-
+	}// end MaterialPoint
 
 
 
