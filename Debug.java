@@ -53,7 +53,7 @@ public class Debug {
 		public static void dens( List<Node> nodes) {
 
 
-			for (int i = 0; i < nodes.size(); ++i) {
+			for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Node Dens: " + String.valueOf(nodes.get(i).dens) );
@@ -69,7 +69,7 @@ public class Debug {
 		public static void xvel( List<Node> nodes) {
 
 
-			for (int i = 0; i < nodes.size(); ++i) {
+			for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Node Xvel: " + String.valueOf(nodes.get(i).xvel) );
@@ -85,7 +85,7 @@ public class Debug {
 		public static void stress( List<Node> nodes) {
 
 
-			for (int i = 0; i < nodes.size(); ++i) {
+			for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Node Stress: " + String.valueOf(nodes.get(i).stress) );
@@ -101,7 +101,7 @@ public class Debug {
 		public static void strain( List<Node> nodes) {
 
 
-			for (int i = 0; i < nodes.size(); ++i) {
+			for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Node Strain: " + String.valueOf(nodes.get(i).strain) );
@@ -117,7 +117,7 @@ public class Debug {
 		public static void ymodulus( List<Node> nodes) {
 
 
-			for (int i = 0; i < nodes.size(); ++i) {
+			for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Node Young's Modulus: " + String.valueOf(nodes.get(i).ymodulus) );
@@ -133,7 +133,7 @@ public class Debug {
 		public static void mass( List<Node> nodes) {
 
 
-			for (int i = 0; i < nodes.size(); ++i) {
+			for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Node Mass: " + String.valueOf(nodes.get(i).mass) );
@@ -167,7 +167,7 @@ public class Debug {
 		public static void xpos( List<MaterialPoint> mps) {
 
 
-			for (int i = 0; i < mps.size(); ++i) {
+			for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Material Point Xpos: " + String.valueOf(mps.get(i).xpos) );
@@ -183,7 +183,7 @@ public class Debug {
 		public static void pnt_xvel( List<MaterialPoint> mps) {
 
 
-			for (int i = 0; i < mps.size(); ++i) {
+			for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Material Point Physical Velocity: " + String.valueOf(mps.get(i).pnt_xvel) );
@@ -199,7 +199,7 @@ public class Debug {
 		public static void xvel( List<MaterialPoint> mps) {
 
 
-			for (int i = 0; i < mps.size(); ++i) {
+			for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Material Point Velocity: " + String.valueOf(mps.get(i).xvel) );
@@ -215,7 +215,7 @@ public class Debug {
 		public static void stress( List<MaterialPoint> mps) {
 
 
-			for (int i = 0; i < mps.size(); ++i) {
+			for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Material Point Stress: " + String.valueOf(mps.get(i).stress) );
@@ -231,7 +231,7 @@ public class Debug {
 		public static void strain( List<MaterialPoint> mps) {
 
 
-			for (int i = 0; i < mps.size(); ++i) {
+			for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Material Point Strain: " + String.valueOf(mps.get(i).strain) );
@@ -247,7 +247,7 @@ public class Debug {
 		public static void ymodulus( List<MaterialPoint> mps) {
 
 
-			for (int i = 0; i < mps.size(); ++i) {
+			for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Material Point Young's Modulus: " + String.valueOf(mps.get(i).ymodulus) );
@@ -265,7 +265,7 @@ public class Debug {
 		public static void mass( List<MaterialPoint> mps) {
 
 
-			for (int i = 0; i < mps.size(); ++i) {
+			for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 				System.out.println( "i = " + String.valueOf(i) + " Material Point Mass: " + String.valueOf(mps.get(i).mass) );
@@ -326,11 +326,11 @@ public class Debug {
 
 		// Then create a vector of boolean values that tells us whether or not a
 		// material point is found in a given node
-		List<Boolean> mp_used = new ArrayList<Boolean>( Arrays.asList( new Boolean[mpData.size()] ) );
+		List<Boolean> mp_used = new ArrayList<Boolean>( Arrays.asList( new Boolean[Constants.num_particles] ) );
 		Collections.fill(mp_used, false); // Fill all the entries to be false
 
 		// For a given element of time, print the data relevant to a given node
-		for (int i = 0; i < nodeData.size(); ++i) {
+		for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 			debugData.append('\t' + "Node " + String.valueOf(i) + '\n');
@@ -339,7 +339,7 @@ public class Debug {
 
 
 			// Go through all of the material point data
-			for (int j = 0; j < mpData.size(); ++j) {
+			for (int j = 0; j < Constants.num_particles; ++j) {
 
 
 				// If a material point lays in a given node's 'span', add it
@@ -362,9 +362,12 @@ public class Debug {
 			}//end for
 
 
+			int size_mp_indices = mp_indices.size();
+
+
 			// Print all of the material points contained in our node
 			debugData.append( "\t\t" + "Material Points Contained in Node " + String.valueOf(i) + ":\n" );
-			for (int j = 0; j < mp_indices.size(); ++j) {
+			for (int j = 0; j < size_mp_indices; ++j) {
 
 
 				debugData.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + '\n');
@@ -375,7 +378,7 @@ public class Debug {
 
 			// Write the x position of the node and its associated mps
 			debugData.append( "\t\t" + "Node xpos: " + String.valueOf(nodeData.get(i).xpos) + '\n' );
-			for (int j = 0; j < mp_indices.size(); ++j) {
+			for (int j = 0; j < size_mp_indices; ++j) {
 
 
 				debugData.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " xpos: " + String.valueOf(mpData.get(mp_indices.get(j)).xpos) + '\n');
@@ -387,7 +390,7 @@ public class Debug {
 			// Write the density and mass of the node and its associated mps
 			debugData.append( "\t\t" + "Node Density: " + String.valueOf(nodeData.get(i).dens) + '\n' );
 			debugData.append( "\t\t" + "Node Mass: " + String.valueOf(nodeData.get(i).mass) + '\n' );
-			for (int j = 0; j < mp_indices.size(); ++j) {
+			for (int j = 0; j < size_mp_indices; ++j) {
 
 
 				debugData.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " mass: " + String.valueOf(mpData.get(mp_indices.get(j)).mass) + '\n');
@@ -398,7 +401,7 @@ public class Debug {
 
 			// Write the xvelocity of the node and its associated mps
 			debugData.append( "\t\t" + "Node xvel: " + String.valueOf(nodeData.get(i).xvel) + '\n' );
-			for (int j = 0; j < mp_indices.size(); ++j) {
+			for (int j = 0; j < size_mp_indices; ++j) {
 
 
 				debugData.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " xvel: " + String.valueOf(mpData.get(mp_indices.get(j)).xvel) + '\n');
@@ -412,7 +415,7 @@ public class Debug {
 			debugData.append( "\t\t" + "Node Stress: " + String.valueOf(nodeData.get(i).stress) + '\n' );
 			debugData.append( "\t\t" + "Node Strain: " + String.valueOf(nodeData.get(i).strain) + '\n' );
 			debugData.append( "\t\t" + "Node Young's Modulus: " + String.valueOf(nodeData.get(i).ymodulus) + '\n' );
-			for (int j = 0; j < mp_indices.size(); ++j) {
+			for (int j = 0; j < size_mp_indices; ++j) {
 
 
 				debugData.append( "\t\t\t" + "MP " + String.valueOf(mp_indices.get(j)) + " Stress: " + String.valueOf(mpData.get(mp_indices.get(j)).stress) + '\n');

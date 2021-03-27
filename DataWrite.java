@@ -57,7 +57,7 @@ public class DataWrite {
 
 		
 		// Write the time and node quantities
-		for ( int i = 0; i < nodes.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 			nodeData.append( String.valueOf(t) );
@@ -91,7 +91,7 @@ public class DataWrite {
 
 
 		// Write material point data
-		for ( int i = 0; i < mps.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			mpData.append( String.valueOf(t) );

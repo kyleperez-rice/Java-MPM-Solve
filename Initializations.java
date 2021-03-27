@@ -8,21 +8,19 @@ public class Initializations {
 	// Initialize our mesh, given number of node points
 	// geometry, and step size
 	public static void InitializeMesh(
-		List<Node> nodes,
-		double xlowbnd,
-		double dx
+		List<Node> nodes
 	) {
 
 
 		// Starting with an empty list,
-		for (int i = 0; i < nodes.size(); ++i) {
+		for (int i = 0; i < Constants.num_nodes; ++i) {
 
 
 			// Initialize length (immutable mostly)
-			nodes.get(i).length = dx;
+			nodes.get(i).length = Constants.dx;
 
 			// Set the position based on our initial xlowbnd
-			nodes.get(i).xpos = xlowbnd + (double)i*dx;
+			nodes.get(i).xpos = Constants.xlowbnd + (double)i*Constants.dx;
 
 			// Set density, etc from the initial state
 			nodes.get(i).dens = InitialState.Density( nodes.get(i).xpos );
@@ -44,10 +42,7 @@ public class Initializations {
 	// how many material points per cell we have, and our step size
 	public static void InitializeMaterialPoints(
 		List<MaterialPoint> mp_points,
-		List<Node> nodes,
-		int num_mps,
-		double dx,
-		double xmin
+		List<Node> nodes
 	) {
 
 
@@ -55,11 +50,11 @@ public class Initializations {
 		// Note: this is the proper size. We don't have any mps
 		// before the first node, or after the second one
 		// this means we have nodes.size() - 1 # of cells
-		for (int i = 0; i < mp_points.size(); ++i) {
+		for (int i = 0; i < Constants.num_particles; ++i) {
 
 
 			// Set material point length
-			mp_points.get(i).length = dx/(double)num_mps;
+			mp_points.get(i).length = Constants.dx/(double)Constants.num_mps;
 
 			// Set the material point position
 			// Check the limiting cases:
@@ -96,11 +91,11 @@ public class Initializations {
 
 
 		// Get the nearest nodes of the system
-		MPMMath.GetNearNodes(mp_points, dx, xmin);
+		MPMMath.GetNearNodes(mp_points);
 
 
 		// Then use the nearest nodes to populate the material point quantities
-		for ( int i = 0; i < mp_points.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			int left_nn = mp_points.get(i).left_nn;

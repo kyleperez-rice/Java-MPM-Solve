@@ -26,9 +26,7 @@ public class MPMMath {
 	// ceiling/floor xpos to get these integers, which are the 
 	// nearest nodes to our material point
 	public static void GetNearNodes(
-		List<MaterialPoint> mps,
-		double dx,
-		double xmin
+		List<MaterialPoint> mps
 	) {
 
 
@@ -36,7 +34,7 @@ public class MPMMath {
 
 
 			// Double that's between the two nearest nodes
-			double approx_index = (mps.get(i).xpos - xmin)/dx;
+			double approx_index = (mps.get(i).xpos - Constants.xlowbnd)/Constants.dx;
 
 			// The nerest nodes
 			// Java's floor functions map from double to double?

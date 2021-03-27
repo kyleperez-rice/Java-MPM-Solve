@@ -21,91 +21,29 @@ public class MPMSolve {
 
 
 
-		// Geometry of the system
-		int num_nodes = 201;
-
-		double xlowbnd = 0.; // xpoint we start at
-		double xhighbnd = 1.; // xpoint we end at
-
-		double dx = (xhighbnd - xlowbnd)/(double)(num_nodes-1); // cell size
-
-
-
-		// Particle properties
-		int num_mps = 2; // Number of mps we have in a cell
-
-		boolean move_particles = true;
-
-
-
-		// Time properties
-		double tmax = 0.3; // Max time to solve until
-		int tsteps = 3000; // Number of steps to take
-
-		double dt = tmax/(double)tsteps; // Size of a timestep
-
-
-
-
-//-------------------------------------------------------------------------------------------------------
-
-
-
-
-		// Data writing properties
-		String node_csv_name = "test.csv";
-		String mp_csv_name = "mp_test.csv";
-
-		// Make a big debug file?
-		boolean debug_file = true;
-
 
 		// Our data files
-		FileWriter nodeData = new FileWriter(node_csv_name);
-		FileWriter mpData = new FileWriter(mp_csv_name);
+		FileWriter nodeData = new FileWriter(Constants.node_csv_name);
+		FileWriter mpData = new FileWriter(Constants.mp_csv_name);
 		FileWriter debugData = new FileWriter("debug.txt");
 
-		if ( debug_file == false ) {
+		if ( !Constants.debug_file ) {
 
-			debugData.append("I don't know how to limit my output without making a file in the first place.\n");
-			debugData.append("I have to declare the file in my main's scope or else I get an error since it will\n");
-			debugData.append("deallocate the variable if it's in an 'if' statement. ;_;\n");
+			debugData.append("No debug file produced.\n");
 			debugData.flush();
 			debugData.close();		
 
 		}//end if
 
-		
-
-
-		// Lists for csv labels
-		//	See documentation on when to change
-		List<String> node_titles = Arrays.asList(
-					"time",
-					"xpos",
-					"stress",
-					"strain",
-					"dens",
-					"xvel"	
-		);
-
-		List<String> mp_titles = Arrays.asList(
-					"time",
-					"xpos",
-					"mass",
-					"strain",
-					"stress",
-					"xvel"
-		);
 
 		
 
 
 		// Give our data files some headers!
-		DataWrite.MakeHeaders(nodeData, node_titles);
-		DataWrite.MakeHeaders(mpData, mp_titles);
+		DataWrite.MakeHeaders(nodeData, Constants.node_titles);
+		DataWrite.MakeHeaders(mpData, Constants.mp_titles);
 
-		if ( debug_file == true ) {
+		if ( Constants.debug_file ) {
 
 			Debug.DataDumpHeader(debugData);
 
@@ -125,7 +63,7 @@ public class MPMSolve {
 
 
 		// Populate our lists with enough entries to make an initial state
-		for ( int i = 0; i < num_nodes; ++i ) {
+		for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 			nodes.add( new Node() );
@@ -133,7 +71,7 @@ public class MPMSolve {
 
 		}//end for
 
-		for ( int i = 0; i < (nodes.size()-1)*num_mps; ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			mp_points.add( new MaterialPoint() );
@@ -151,14 +89,14 @@ public class MPMSolve {
 
 
 		// Then make the initial state
-		Initializations.InitializeMesh(nodes, xlowbnd, dx);
-		Initializations.InitializeMaterialPoints(mp_points, nodes, num_mps, dx, xlowbnd);
+		Initializations.InitializeMesh(nodes);
+		Initializations.InitializeMaterialPoints(mp_points, nodes);
 		
 
 
 		// Then get the nearest nodes to our material points
 		// and find the initial node masses
-		MPMMath.GetNearNodes(mp_points, dx, xlowbnd);
+		MPMMath.GetNearNodes(mp_points);
 		SimUpdate.ComputeNodeMasses(nodes, mp_points);
 
 
@@ -171,25 +109,31 @@ public class MPMSolve {
 
 
 		// Then evolve the system in time
-		for ( int tt = 0; tt < tsteps; ++tt ) {
+		for ( int tt = 0; tt < Constants.tsteps; ++tt ) {
 
 
-			// First save our data
-			DataWrite.Node(nodeData, nodes, t);
-			DataWrite.MaterialPoint(mpData, mp_points, t);
 
-			if ( debug_file == true ) {
+			// Data recording
+			if (tt % Constants.record_frequency == 0) {
 
-				Debug.DataDump(debugData, nodes, mp_points, t);
+				// First save our data
+				DataWrite.Node(nodeData, nodes, t);
+				DataWrite.MaterialPoint(mpData, mp_points, t);
+
+				if ( Constants.debug_file ) {
+
+					Debug.DataDump(debugData, nodes, mp_points, t);
+
+				}//end if
 
 			}//end if
 
 
 			// Then use these Lagrangian quantities to find the Eulerian ones
 			// At the next timestep
-			SimUpdate.UpdateParticle.Strain(mp_points, nodes, dt);
-			SimUpdate.UpdateVelocity(nodes, mp_points, t, dt, move_particles);
-			SimUpdate.UpdateParticle.Stress(mp_points, nodes, dt);
+			SimUpdate.UpdateParticle.Strain(mp_points, nodes);
+			SimUpdate.UpdateVelocity(nodes, mp_points, t);
+			SimUpdate.UpdateParticle.Stress(mp_points, nodes);
 
 
 
@@ -201,7 +145,7 @@ public class MPMSolve {
 
 
 			// Advance system in time
-			t += dt;
+			t += Constants.dt;
 
 
 
@@ -224,25 +168,12 @@ public class MPMSolve {
 		mpData.close();
 
 
-		if ( debug_file == true)  {
+		if ( Constants.debug_file )  {
 
 			debugData.flush();
 			debugData.close();
 
 		}//end if
-
-
-
-		
-
-
-
-		// Big data dump
-		//if (debug_file == true) {
-
-		//	Debug.DataDump(nodeData, mpData, dt);
-
-		//}//end if
 		
 
 

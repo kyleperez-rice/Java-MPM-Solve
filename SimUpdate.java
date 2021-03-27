@@ -13,7 +13,7 @@ public class SimUpdate {
 
 
 		// First set masses to 0
-		for ( int i = 0; i < nodes.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 			nodes.get(i).mass = 0.;
@@ -27,7 +27,7 @@ public class SimUpdate {
 		// nearest nodes to cover all of the nodes
 		//
 		// This works only for linear shape functions!
-		for ( int i = 0; i < mp_points.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			int left_nn = mp_points.get(i).left_nn;
@@ -47,16 +47,15 @@ public class SimUpdate {
 
 	// Move the particles
 	public static void MoveParticles(
-		List<MaterialPoint> mps,
-		double dt
+		List<MaterialPoint> mps
 	) {
 
 
 		// xposition = xposition + vel*dt
-		for ( int i = 0; i < mps.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
-			mps.get(i).xpos += mps.get(i).pnt_xvel * dt;
+			mps.get(i).xpos += mps.get(i).pnt_xvel * Constants.dt;
 
 
 		}//end for
@@ -79,14 +78,12 @@ public class SimUpdate {
 	public static void UpdateVelocity(
 		List<Node> nodes,
 		List<MaterialPoint> mps,
-		double t,
-		double dt,
-		boolean move_particles
+		double t
 	) {
 
 
 		// First compute v_p = v_p - sum_{l: nodes}v_l shapef_l()
-		for ( int i = 0; i < mps.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			int left_nn = mps.get(i).left_nn;
@@ -103,10 +100,10 @@ public class SimUpdate {
 		// = v^n + f*dt - dt/m * sum_{p: mps} v_p * sigma_p * d_shapef(mpxpos)
 		//
 		// First: the external forces
-		for ( int i = 0; i < nodes.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
-			nodes.get(i).xvel += Accelerations.external_x( nodes.get(i), t )*dt;
+			nodes.get(i).xvel += Accelerations.external_x( nodes.get(i), t )*Constants.dt;
 
 
 		}//end for
@@ -114,14 +111,14 @@ public class SimUpdate {
 
 		// Then include the material point contributions
 		// only using the closest nodes to each point
-		for ( int i = 0; i < mps.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			int left_nn = mps.get(i).left_nn;
 			int right_nn = mps.get(i).right_nn;
 
-			nodes.get( left_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( left_nn ).d_shapef( mps.get(i).xpos ) * dt / nodes.get( left_nn ).mass;
-			nodes.get( right_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( right_nn ).d_shapef( mps.get(i).xpos ) * dt / nodes.get( right_nn ).mass;
+			nodes.get( left_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( left_nn ).d_shapef( mps.get(i).xpos ) * Constants.dt / nodes.get( left_nn ).mass;
+			nodes.get( right_nn ).xvel -= mps.get(i).length * mps.get(i).stress * nodes.get( right_nn ).d_shapef( mps.get(i).xpos ) * Constants.dt / nodes.get( right_nn ).mass;
 
 
 		}//end for
@@ -129,14 +126,14 @@ public class SimUpdate {
 
 		// Then enforce the boundary conditions!
 		nodes.get(0).xvel = BoundaryConditions.Velocity.Left(t);
-		nodes.get( nodes.size() - 1 ).xvel = BoundaryConditions.Velocity.Right(t);
+		nodes.get( Constants.num_nodes - 1 ).xvel = BoundaryConditions.Velocity.Right(t);
 
 
 		// Next, finish computing v_p(t+dt)
 		// Just need to do v_p = v_p + sum_l v_l * shapef()
 		// By pnt_xvel = sum_l v^L * shapef()
 		// v_p = v_p + pnt_xvel
-		for ( int i = 0; i < mps.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			int left_nn = mps.get(i).left_nn;
@@ -153,9 +150,9 @@ public class SimUpdate {
 
 
 		// Then move the particles and recompute node masses
-		if ( move_particles == true ) {
+		if ( Constants.move_particles) {
 
-			SimUpdate.MoveParticles(mps, dt);
+			SimUpdate.MoveParticles(mps);
 			SimUpdate.ComputeNodeMasses(nodes, mps);
 
 		}//end if
@@ -166,7 +163,7 @@ public class SimUpdate {
 		// Do this by setting nodal velocity to be zero, then
 		// running sum over material points and dividing by mass
 		// And fixing boundaries one more time
-		for ( int i = 0; i < nodes.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 			nodes.get(i).xvel = 0.;
@@ -175,7 +172,7 @@ public class SimUpdate {
 		}//end for
 
 
-		for ( int i = 0; i < mps.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 			int left_nn = mps.get(i).left_nn;
@@ -189,7 +186,7 @@ public class SimUpdate {
 
 
 		// Then divide by mass
-		for ( int i = 0; i < nodes.size(); ++i ) {
+		for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 			nodes.get(i).xvel /= nodes.get(i).mass;
@@ -200,7 +197,7 @@ public class SimUpdate {
 
 		// Enforce boundary conditions one more time!
 		nodes.get(0).xvel = BoundaryConditions.Velocity.Left(t);
-		nodes.get( nodes.size() - 1 ).xvel = BoundaryConditions.Velocity.Right(t);
+		nodes.get( Constants.num_nodes - 1 ).xvel = BoundaryConditions.Velocity.Right(t);
 
 
 	}//end UpdateVelocity
@@ -232,20 +229,19 @@ public class SimUpdate {
 		// Update the particle strain
 		public static void Strain (
 			List<MaterialPoint> mps,
-			List<Node> nodes,
-			double dt
+			List<Node> nodes
 		) {
 
 			// Strain rate is just sum_{nodes l} v_l d_shapef_l (xpos)
 			// For linear shape functions, becomes two terms
-			for ( int i = 0; i < mps.size(); ++i ) {
+			for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 				int left_nn = mps.get(i).left_nn;
 				int right_nn = mps.get(i).right_nn;
 
-				mps.get(i).strain += nodes.get( left_nn ).xvel * nodes.get( left_nn ).d_shapef( mps.get(i).xpos )*dt;
-				mps.get(i).strain += nodes.get( right_nn ).xvel * nodes.get( right_nn ).d_shapef( mps.get(i).xpos )*dt;
+				mps.get(i).strain += nodes.get( left_nn ).xvel * nodes.get( left_nn ).d_shapef( mps.get(i).xpos )*Constants.dt;
+				mps.get(i).strain += nodes.get( right_nn ).xvel * nodes.get( right_nn ).d_shapef( mps.get(i).xpos )*Constants.dt;
 
 
 			}//end for
@@ -258,12 +254,11 @@ public class SimUpdate {
 		// Update the particle stress
 		public static void Stress (
 			List<MaterialPoint> mps,
-			List<Node> nodes,
-			double dt
+			List<Node> nodes
 		) {
 
 
-			for ( int i = 0; i < mps.size(); ++i ) {
+			for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 				// Not very general; relies explicitly on stress-strain relation!
@@ -299,7 +294,7 @@ public class SimUpdate {
 
 			
 			// Node density = nodemass/length
-			for ( int i = 0; i < nodes.size(); ++i ) {
+			for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 				nodes.get(i).dens = nodes.get(i).mass / nodes.get(i).length;
@@ -326,7 +321,7 @@ public class SimUpdate {
 
 
 			// Set node strain to be 0
-			for ( int i = 0; i < nodes.size(); ++i ) {
+			for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 				nodes.get(i).strain = 0.;
@@ -337,7 +332,7 @@ public class SimUpdate {
 
 			// Then over use the material points' nearest nodes
 			// to construct the node velocity
-			for ( int i = 0; i < mps.size(); ++i ) {
+			for ( int i = 0; i < Constants.num_particles; ++i ) {
 
 
 				int left_nn = mps.get(i).left_nn;
@@ -351,7 +346,7 @@ public class SimUpdate {
 
 
 			// Then divide by the mass for every node
-			for ( int i = 0; i < nodes.size(); ++i ) {
+			for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 				nodes.get(i).strain /= nodes.get(i).mass;
@@ -372,7 +367,7 @@ public class SimUpdate {
 		) {
 
 
-			for ( int i = 0; i < nodes.size(); ++i ) {
+			for ( int i = 0; i < Constants.num_nodes; ++i ) {
 
 
 				// In case you have different stress-strain relation,
