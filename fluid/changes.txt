@@ -1,0 +1,42 @@
+THE CHANGES MADE IN ORDER TO GET THING WORKING FOR A FLUID
+
+1. Node/MaterialPoint.java: add pressure/gamma instead of strain/ymodulus
+
+2. InitialState.java: add initial conditions; including pressure/gamma
+
+3. Add accelerations (per problem)
+
+4. Add boundary conditions on v (per problem)
+
+5. Initializations.java: initialize pressure/gamma and stress
+	-- Stress strain relation
+
+6. SimUpdate.java:
+	-- Update UpdateParticle.Pressure; see paper
+	-- Update stress strain relation in UpdateParticle.Stress
+	-- Update the node calculation function
+		-- Rename strain to pressure
+		-- Use stress-strain relation
+
+7. Constants.java: swap strain to pres
+
+8. DataWrite.java:
+	-- node write: swap strain to pres
+	-- mp write: same here
+
+9. Debug.java:
+	Update strain to pres
+	Update ymodulus to gamma
+
+10. MPMSolve.java
+	Update UpdateParticle.Strain to UpdateParticle.Pressure
+
+
+O. Add constants in Constants.java (optional)
+
+
+U. Add elements to list for csv
+U. Debug add elements
+U. Initializations.
+U. Initial State.
+U. 
