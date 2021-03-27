@@ -12,7 +12,7 @@ public class MPMSolve {
 
 
 //---------------------------------------------------------------
-		// CONSTANTS and OPTIONS
+		// SETUP
 
 
 
