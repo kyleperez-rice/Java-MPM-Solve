@@ -64,8 +64,8 @@ public class Constants {
 		"time",
 		"xpos",
 		"mass",
-		"strain",
 		"stress",
+		"strain",
 		"xvel"
 	);
 
