@@ -1,27 +1,33 @@
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+from matplotlib import animation
 import numpy as np
 
 from plot_constants import *
 
 
-mesh_data = pd.read_csv(r'/home/kyleperez/javastuff/admpm/alpha/test.csv', header=0)
+mesh_data = pd.read_csv(r'/home/kyleperez/javastuff/admpm/ShakeWave/Moving/test.csv', header=0)
 
 
+# Analytic solution for a solid with a wave shaking on the right
 def analytic_solution(type, x, t):
-# Analytic solution for u(x,t) = -A * sin(pi x / L) * sin(pi c t / L)
 
-	rho = 1.
+
+	# Initial Density/ Young's Modulus
+	rho0 = 1.
 	Y = 1.
 
-	c = np.sqrt(Y/rho)
+	# Speed of sound
+	c = np.sqrt(Y/rho0)
 
+	# Length of the system
 	L = 1.
 
-	A = 0.01
+	# Driving velocity
+	v0 = 0.01
 
+	# Angular frequency of drive
 	omega = 10.
 
 	y = []
@@ -31,13 +37,33 @@ def analytic_solution(type, x, t):
 		for i in range( len(x) ):
 
 
-			if x[i] < (L - c*t):
+			if t < L/c:
 
-				y.append(0.)
+				if x[i] < L-c*t:
+
+					y.append(0.)
+
+				else:
+
+					y.append( v0 * np.sin( omega*( (x[i]-L)/c + t ) )/c )
+
+				#end if
+
+			elif t < 2*L/c:
+
+				if x[i] < c*t-L:
+
+					y.append( 2*v0 * np.cos(omega*x[i]/c) * np.sin(omega*(t-L/c))/c )
+
+				else:
+
+					y.append( v0 * np.sin( omega*( (x[i]-L)/c + t ) )/c )
+
+				#end if
 
 			else:
 
-				y.append((A/c) * np.sin( omega*(x[i]-L)/c + omega*t ))
+				y.append(0.)
 
 			#end if
 
@@ -49,13 +75,33 @@ def analytic_solution(type, x, t):
 		for i in range( len(x) ):
 
 
-			if x[i] < (L - c*t):
+			if t < L/c:
 
-				y.append(rho)
+				if x[i] < L-c*t:
+
+					y.append( rho0 )
+
+				else:
+
+					y.append( rho0*( 1 -  v0 * np.sin( omega*( (x[i]-L)/c + t ) )/c) )
+
+				#end if
+
+			elif t < 2*L/c:
+
+				if x[i] < c*t-L:
+
+					y.append( rho0*( 1 - 2*v0 * np.cos(omega*x[i]/c) * np.sin(omega*(t-L/c))/c ) )
+
+				else:
+
+					y.append( rho0*( 1 -  v0 * np.sin( omega*( (x[i]-L)/c + t ) )/c) )
+
+				#end if
 
 			else:
 
-				y.append(rho*( 1. - (A/c)*np.sin( omega*(x[i]-L)/c + omega*t ) ))
+				y.append(0.)
 
 			#end if
 
@@ -67,13 +113,33 @@ def analytic_solution(type, x, t):
 		for i in range( len(x) ):
 
 
-			if x[i] < (L - c*t):
+			if t < L/c:
 
-				y.append(0.)
+				if x[i] < L-c*t:
+
+					y.append(0.)
+
+				else:
+
+					y.append( v0 * np.sin( omega*( (x[i]-L)/c + t ) ) )
+
+				#end if
+
+			elif t < 2*L/c:
+
+				if x[i] < c*t - L:
+
+					y.append( 2*v0 * np.sin(omega*x[i]/c) * np.cos(omega*(t-L/c)) )
+
+				else:
+
+					y.append( v0 * np.sin( omega*( (x[i]-L)/c + t ) ) )
+
+				#end if
 
 			else:
 
-				y.append( A* np.sin( omega*(x[i]-L)/c + omega*t ) )
+				y.append(0.)
 
 			#end if
 
@@ -87,41 +153,6 @@ def analytic_solution(type, x, t):
 
 
 #end analytic_solution
-
-
-"""
-def analytic_solution(type, x, t):
-# Analytic solution for u(x,t) = -A * sin(pi x / L) * sin(pi c t / L)
-
-	rho = 1.
-	Y = 1.
-
-	c = np.sqrt(Y/rho)
-
-	L = 1.
-
-	A = 0.01
-
-	if (type == "Strain"):
-
-		return -A*(np.pi/L) * np.cos(np.pi * x/L) * np.sin( c* np.pi * t/L)
-
-	elif (type == "Density"):
-		# dens = rho( 1 - strain )
-
-		data = rho * np.ones( len(x) )
-
-		return data + A*rho*(np.pi/L) * np.cos(np.pi * x/L) * np.sin( c* np.pi * t/L)
-
-	elif (type == "Xvel"):
-
-		return -c * A* (np.pi / L) * np.sin(np.pi * x / L) * np.cos(c * np.pi * t / L) 
-
-	#end if
-
-
-#end analytic_solution
-"""
 
 
 
@@ -138,35 +169,52 @@ ax = fig.add_subplot(1,1,1)
 
 
 
-def animation(i):
+def update(i):
+
+
 	x = np.array(mesh_data['xpos'][num_nodes*i : num_nodes*(i+1)])
 	
-	#y = mesh_data['strain'][num_nodes*i: num_nodes*(i+1)]
+	y = mesh_data['strain'][num_nodes*i: num_nodes*(i+1)]
 	#y = mesh_data['dens'][num_nodes*i: num_nodes*(i+1)]
-	y = mesh_data['xvel'][num_nodes*i: num_nodes*(i+1)]
+	#y = mesh_data['xvel'][num_nodes*i: num_nodes*(i+1)]
 
-	time = i*dt
+	time = i*dt * record_frequency
 	
 	ax.clear()
 	ax.plot(x, y, '-', label='Simulation')
 
-	#ax.plot(x, analytic_solution('Strain', x, time), '--', label='Analytic')
-	#ax.plot(x, analytic_solution('Density', x, time), '--', label='Analytic')
-	ax.plot(x, analytic_solution('Xvel', x, time), '--', label='Analytic')
+	
+	if ( time < 2. ):
+
+		ax.plot(x, analytic_solution('Strain', x, time), '--', label='Analytic')
+		#ax.plot(x, analytic_solution('Density', x, time), '--', label='Analytic')
+		#ax.plot(x, analytic_solution('Xvel', x, time), '--', label='Analytic')
+
+	#end if
 	ax.legend()
 	
 	#Works for Stress/Strain
-	#ax.set(ylim = [-0.015, 0.015], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Strain',title='Strain v x')
+	ax.set(ylim = [-0.05, 0.05], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Strain',title='Strain v x')
 	
 	#Works for Density
-	#ax.set(ylim=[0.985, 1.015], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Density (g/cm**3)',title='Density v x')
+	#ax.set(ylim=[0.95, 1.05], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Density (g/cm**3)',title='Density v x')
 	
 	#Works for xvel
-	ax.set(ylim=[-.011, .011], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Velocity (cm/s)',title='Velocity v x')
+	#ax.set(ylim=[-.05, .05], xlim=[xlowbnd,xhighbnd], xlabel='x (cm)', ylabel='Velocity (cm/s)',title='Velocity v x')
 	
+
+#end animation
 	
 # the frames=... num can prevent the plot from crashing
-animation = FuncAnimation(fig, func=animation, frames=tsteps, interval=10)
+ani = animation.FuncAnimation(fig, func=update, frames=tsteps//record_frequency, interval=10, save_count = tsteps//record_frequency)
+
+
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+
+video = animation.FFMpegWriter(fps=10)
+
+ani.save('ShakeWaveMovingStrain.mp4', writer=writer)
 
 
 
